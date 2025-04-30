@@ -1,136 +1,121 @@
-# Bot Tự Động Upload File lên CADDi Drawer
+# CADDi Drawer File Upload Automation
 
-Dự án này tự động hóa quy trình tải file PDF từ Google Drive lên CADDi Drawer, với tính năng theo dõi trạng thái và ghi log tự động. Bot xử lý toàn bộ quy trình từ việc đọc thông tin file từ Google Sheets, tải file từ Google Drive, upload lên CADDi Drawer và cập nhật trạng thái.
+Dự án tự động hóa quy trình upload và quản lý file trên hệ thống CADDi Drawer.
 
-## Tính Năng
+## Mô tả Dự Án
 
-- Tự động upload file từ Google Drive lên CADDi Drawer
-- Tích hợp với Google Sheets để theo dõi và cập nhật trạng thái file
-- Tự động di chuyển file đã hoàn thành vào thư mục hoàn thành
-- Hệ thống ghi log chi tiết
-- Xử lý lỗi và cơ chế thử lại
-- Tự động hóa trình duyệt sử dụng Playwright
+Dự án này tự động hóa các công việc sau:
+1. Upload file PDF lên hệ thống CADDi Drawer
+2. Cập nhật thông tin mô tả (Description) cho file
+3. Lấy và lưu trữ Drawing ID
+4. Quản lý trạng thái file trong Excel
+5. Ghi log toàn bộ quá trình
 
-## Yêu Cầu Hệ Thống
+## Cấu Trúc Thư Mục
 
-- Python 3.8 trở lên
-- Dự án Google Cloud với các API đã kích hoạt:
-  - Google Drive API
-  - Google Sheets API
-- Tài khoản CADDi Drawer
-- Thông tin xác thực tài khoản dịch vụ (credentials.json)
+```
+robotRPA/
+├── TMF-nguon/       # Thư mục chứa file nguồn cần upload
+├── TMF-upload/      # Thư mục chứa file đã upload
+├── TMF-completed/   # Thư mục chứa file đã xử lý hoàn tất
+├── bot_caddi.py     # Module chính xử lý tương tác với CADDi
+├── main_local.py    # Script chính để chạy automation
+├── excel_handler.py # Module xử lý file Excel
+├── logger.py        # Module ghi log
+└── requirements.txt # Các dependency cần thiết
+```
 
-## Cài Đặt
+## Quy Trình Xử Lý
 
-1. Cài đặt các thư viện phụ thuộc:
+### 1. Upload File
+- Đọc danh sách file từ Excel
+- Kiểm tra file trong thư mục TMF-nguon
+- Upload lên CADDi Drawer với Project và Category tương ứng
+- Di chuyển file đã upload sang TMF-upload
+- Cập nhật trạng thái trong Excel
+
+### 2. Cập Nhật Description
+- Tìm file đã upload trên CADDi Drawer
+- Click vào file để mở chi tiết
+- Lấy Drawing ID
+- Cập nhật Description từ Excel
+- Lưu thông tin
+
+### 3. Hoàn Thành Xử Lý
+- Cập nhật Drawing ID vào Excel
+- Di chuyển file từ TMF-upload sang TMF-completed
+- Cập nhật trạng thái "Hoàn thành" trong Excel
+- Di chuyển dòng dữ liệu sang sheet hoàn thành
+
+## Cài Đặt và Sử Dụng
+
+### Yêu Cầu Hệ Thống
+- Python 3.11+
+- Playwright
+- pandas
+- openpyxl
+
+### Cài Đặt
+1. Clone repository:
+```bash
+git clone https://github.com/itgisgroup/robotRPA.git
+```
+
+2. Tạo và kích hoạt môi trường ảo:
+```bash
+python -m venv venv
+source venv/bin/activate  # Linux/Mac
+venv\Scripts\activate     # Windows
+```
+
+3. Cài đặt dependencies:
 ```bash
 pip install -r requirements.txt
 ```
 
-2. Cài đặt trình duyệt Playwright:
+4. Cài đặt Playwright:
 ```bash
 playwright install
 ```
 
-3. Cấu hình các thông số trong `main.py`:
-- `SHEET_ID`: ID của Google Sheet
-- `COMPLETED_FOLDER_ID`: ID của thư mục Google Drive chứa file đã hoàn thành
-- `USERNAME`: Email đăng nhập CADDi Drawer
-- `PASSWORD`: Mật khẩu đăng nhập CADDi Drawer
+### Cấu Hình
+1. Tạo các thư mục cần thiết:
+- TMF-nguon
+- TMF-upload
+- TMF-completed
 
-4. Thiết lập Google Sheet với các cột sau:
-- Tên dự án (Project)
+2. Chuẩn bị file Excel với các cột:
 - Tên file (File name)
+- Tên dự án (Project)
+- File category
 - Mô tả (Description)
-- Đường dẫn file
-- ID file CADDi
 - Trạng thái
 
-## Quy Trình Chi Tiết
+### Chạy Chương Trình
+```bash
+python main_local.py
+```
 
-Bot thực hiện theo quy trình từng bước như sau:
+## Xử Lý Lỗi và Log
 
-1. **Khởi Tạo và Thiết Lập**
-   - Tải cấu hình từ main.py
-   - Khởi tạo hệ thống ghi log
-   - Thiết lập kết nối với các API của Google
+### Hệ Thống Log
+- Log được ghi vào file `bot.log`
+- Log được lưu trong sheet "Logs" của file Excel
+- Các loại log: INFO, ERROR, SUCCESS
 
-2. **Đọc Danh Sách File từ Google Sheet**
-   - Kết nối đến Google Sheet đã chỉ định
-   - Đọc các dòng có trạng thái "Chờ xử lý"
-   - Trích xuất thông tin file (tên, dự án, mô tả, đường dẫn)
+### Xử Lý Lỗi
+- Tự động retry khi không tìm thấy element
+- Ghi log chi tiết cho mỗi bước xử lý
+- Cập nhật trạng thái lỗi trong Excel
+- Giữ nguyên file trong thư mục gốc khi có lỗi
 
-3. **Quản Lý Phiên Trình Duyệt**
-   - Khởi tạo trình duyệt Playwright ở chế độ có giao diện
-   - Xử lý đăng nhập CADDi Drawer
-   - Duy trì phiên làm việc cho nhiều lần upload
+## Bảo Mật
+- Thông tin đăng nhập được lưu trong biến môi trường
+- File Excel chứa dữ liệu nhạy cảm không được push lên git
+- Các file đã xử lý được lưu trữ an toàn trong thư mục riêng
 
-4. **Vòng Lặp Xử Lý File**
-   Với mỗi file:
-   
-   a. **Tải từ Google Drive**
-   - Lấy ID file từ URL Google Drive
-   - Tải về thư mục tạm thời
-   - Kiểm tra tính toàn vẹn của file
-   
-   b. **Upload lên CADDi Drawer**
-   - Click nút Upload
-   - Chọn dự án từ danh sách thả xuống
-   - Upload file
-   - Đợi hoàn thành upload
-   - Xử lý các hộp thoại xác nhận upload
-   
-   c. **Xác Minh File và Cập Nhật Mô Tả**
-   - Tìm kiếm file đã upload
-   - Mở chi tiết file
-   - Lấy Drawing ID
-   - Cập nhật mô tả file
-   
-   d. **Cập Nhật Trạng Thái**
-   - Cập nhật Drawing ID vào Google Sheet
-   - Chuyển dòng sang sheet "Upload Hoàn thành"
-   - Di chuyển file vào thư mục hoàn thành trong Google Drive
-   
-   e. **Ghi Log**
-   - Ghi lại tất cả các hành động vào bot.log
-   - Cập nhật sheet log trong Google Sheets
-   - Xử lý và ghi log các lỗi
+## Đóng Góp
+Mọi đóng góp vui lòng tạo Pull Request hoặc báo lỗi qua Issues.
 
-5. **Xử Lý Lỗi**
-   - Thử lại khi gặp lỗi mạng
-   - Ghi log tất cả các lỗi
-   - Duy trì trạng thái cho các lần upload thất bại
-   - Cung cấp thông báo lỗi chi tiết
-
-## Hệ Thống Ghi Log
-
-Bot duy trì log chi tiết tại:
-- File `bot.log` cho log kỹ thuật chi tiết
-- Sheet "Logs" trong Google Sheets để theo dõi trạng thái thân thiện với người dùng
-
-## Xử Lý Lỗi
-
-Hệ thống bao gồm xử lý lỗi mạnh mẽ cho:
-- Vấn đề kết nối mạng
-- Lỗi tải/upload file
-- Giới hạn tốc độ API Google
-- Thay đổi giao diện CADDi Drawer
-- Timeout phiên làm việc
-- Vấn đề về định dạng/kích thước file
-
-## Theo Dõi Trạng Thái File
-
-File có thể có các trạng thái sau:
-- Chờ xử lý
-- Đang xử lý
-- Hoàn thành
-- Lỗi
-
-## Hỗ Trợ
-
-Khi gặp vấn đề, vui lòng kiểm tra:
-1. File log
-2. Xác thực thông tin đăng nhập API Google
-3. Kiểm tra thông tin đăng nhập CADDi Drawer
-4. Kiểm tra kết nối mạng
-5. Kiểm tra quyền truy cập file trong Google Drive 
+## License
+MIT License 
