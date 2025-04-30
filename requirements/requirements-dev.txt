@@ -1,0 +1,33 @@
+# Import base requirements
+-r requirements-prod.txt
+
+# Testing and development
+pytest==8.0.0                # Testing framework
+pytest-playwright==0.4.4     # Playwright testing support
+pytest-cov==4.1.0           # Test coverage reporting
+pytest-xdist==3.5.0         # Parallel testing
+
+# Code quality
+black==24.1.1               # Code formatting
+flake8==7.0.0              # Code linting
+mypy==1.8.0                # Type checking
+pylint==3.0.3              # Code analysis
+isort==5.13.2              # Import sorting
+
+# Debugging
+ipython==8.21.0            # Enhanced Python shell
+ipdb==0.13.13              # IPython debugger
+memory-profiler==0.61.0    # Memory profiling
+
+# Documentation
+sphinx==7.2.6              # Documentation generator
+sphinx-rtd-theme==2.0.0    # Documentation theme
+autodoc==0.5.0             # API documentation
+
+# Development tools
+pre-commit==3.6.0          # Git hooks
+bump2version==1.0.1        # Version management
+watchdog==3.0.0            # File system monitoring
+
+# Performance testing
+locust==2.24.0             # Load testing 

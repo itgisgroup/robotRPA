@@ -1,6 +1,43 @@
-pandas==2.2.1
-openpyxl==3.1.2
-playwright==1.42.0
+# Core dependencies
+playwright==1.41.2         # Browser automation
+pandas==2.2.0             # Excel handling and data manipulation
+openpyxl==3.1.2          # Excel file support for pandas
+python-dotenv==1.0.1      # Environment variable management
+
+# File handling and system
+pathlib==1.0.1           # Path manipulation
+shutil==1.7.0            # File operations
+python-magic==0.4.27     # File type detection
+watchdog==3.0.0          # File system monitoring
+
+# Logging and monitoring
+colorlog==6.8.2          # Colored console logging
+loguru==0.7.2            # Advanced logging
+
+# Error handling and retrying
+tenacity==8.2.3          # Retry operations
+backoff==2.2.1           # Exponential backoff
+
+# Testing and development
+pytest==8.0.0            # Testing framework
+pytest-playwright==0.4.4  # Playwright testing support
+black==24.1.1            # Code formatting
+flake8==7.0.0            # Code linting
+mypy==1.8.0              # Type checking
+
+# Performance and optimization
+tqdm==4.66.1             # Progress bars
+concurrent-log-handler==0.9.24  # Thread-safe logging
+
+# Security
+cryptography==42.0.2     # Encryption and security
+python-jose==3.3.0       # JWT token handling
+
+# Optional but recommended
+rich==13.7.0             # Rich text and formatting in terminal
+typer==0.9.0             # CLI interface
+pydantic==2.6.1          # Data validation
+
 gspread==5.12.4
 google-auth==2.28.1
 google-auth-oauthlib==1.2.0

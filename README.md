@@ -25,6 +25,73 @@ robotRPA/
 └── requirements.txt # Các dependency cần thiết
 ```
 
+## Cấu Trúc File Excel Nguồn
+
+### 1. Yêu Cầu File Excel
+- Định dạng: `.xlsx` (Excel 2007 trở lên)
+- Sheet chính: "Data" (chứa dữ liệu cần xử lý)
+- Sheet phụ: "Completed" (chứa dữ liệu đã xử lý)
+- Sheet log: "Logs" (chứa lịch sử xử lý)
+
+### 2. Cấu Trúc Sheet "Data"
+| Cột | Mô tả | Yêu cầu | Ví dụ |
+|-----|--------|---------|--------|
+| File name | Tên file PDF cần upload | Bắt buộc, phải trùng với tên file trong thư mục TMF-nguon | `ABC123.pdf` |
+| Project | Tên dự án trên CADDi | Bắt buộc, phải khớp chính xác với tên dự án trên CADDi | `Project A` |
+| File category | Danh mục file | Bắt buộc, phải nằm trong danh sách category cho phép | `Drawing` |
+| Description | Mô tả file | Bắt buộc, tối đa 500 ký tự | `Bản vẽ chi tiết phần A` |
+| Status | Trạng thái xử lý | Tự động cập nhật | `Pending`, `Uploaded`, `Completed`, `Error` |
+| Drawing ID | Mã bản vẽ từ CADDi | Tự động cập nhật sau khi upload | `DRW-123456` |
+| Upload Date | Ngày upload | Tự động cập nhật | `2024-03-20 15:30:45` |
+| Error Message | Thông báo lỗi (nếu có) | Tự động cập nhật khi có lỗi | `File not found` |
+
+### 3. Quy Tắc Dữ Liệu
+1. File name:
+   - Không chứa ký tự đặc biệt (ngoại trừ dấu chấm và gạch dưới)
+   - Phải có đuôi .pdf
+   - Không được trùng lặp trong sheet
+
+2. Project:
+   - Phải tồn tại trên hệ thống CADDi
+   - Phân biệt chữ hoa/thường
+   - Không được để trống
+
+3. File category:
+   - Các giá trị cho phép:
+     * Drawing (Bản vẽ)
+     * Specification (Thông số kỹ thuật)
+     * Report (Báo cáo)
+     * Other (Khác)
+
+4. Description:
+   - Không chứa HTML hoặc script
+   - Tối thiểu 10 ký tự
+   - Tối đa 500 ký tự
+   - Có thể chứa Unicode (tiếng Việt)
+
+### 4. Sheet "Completed"
+- Cấu trúc giống sheet "Data"
+- Chứa các bản ghi đã xử lý thành công
+- Tự động chuyển từ sheet "Data" sau khi hoàn thành
+- Không được chỉnh sửa thủ công
+
+### 5. Sheet "Logs"
+| Cột | Mô tả |
+|-----|--------|
+| Timestamp | Thời gian ghi log |
+| Level | Mức độ: INFO, ERROR, SUCCESS |
+| Message | Nội dung log |
+| File | File liên quan |
+| Details | Chi tiết bổ sung |
+
+### 6. Lưu Ý Quan Trọng
+- Backup file Excel trước khi chạy script
+- Không mở file Excel trong quá trình script đang chạy
+- Không xóa hoặc thêm cột trong các sheet
+- Không đổi tên sheet
+- Kiểm tra định dạng dữ liệu trước khi chạy
+- Đảm bảo tất cả file PDF được liệt kê đã có trong thư mục TMF-nguon
+
 ## Quy Trình Xử Lý
 
 ### 1. Upload File
@@ -78,23 +145,97 @@ pip install -r requirements.txt
 playwright install
 ```
 
-### Cấu Hình
-1. Tạo các thư mục cần thiết:
-- TMF-nguon
-- TMF-upload
-- TMF-completed
+## Hướng Dẫn Cài Đặt Chi Tiết Cho Windows
 
-2. Chuẩn bị file Excel với các cột:
-- Tên file (File name)
-- Tên dự án (Project)
-- File category
-- Mô tả (Description)
-- Trạng thái
+### 1. Chuẩn Bị Môi Trường
+1. Tải và cài đặt Python 3.11 hoặc cao hơn
+   - Truy cập https://www.python.org/downloads/windows/
+   - Tải phiên bản Python 3.11.x (Windows installer 64-bit)
+   - Chạy file cài đặt
+   - ✅ Đánh dấu "Add Python to PATH" trong quá trình cài đặt
+   - Nhấn "Install Now"
 
-### Chạy Chương Trình
-```bash
-python main_local.py
-```
+2. Kiểm tra cài đặt Python
+   - Mở Command Prompt (cmd)
+   - Gõ lệnh: `python --version`
+   - Nếu hiển thị phiên bản Python là thành công
+
+### 2. Tải Mã Nguồn
+1. Tải ZIP từ GitHub
+   - Truy cập https://github.com/itgisgroup/robotRPA
+   - Nhấn nút "Code" màu xanh
+   - Chọn "Download ZIP"
+   - Giải nén file ZIP vào thư mục mong muốn (Ví dụ: C:\robotRPA)
+
+2. Hoặc sử dụng Git (nếu có)
+   - Cài đặt Git từ https://git-scm.com/download/win
+   - Mở Command Prompt
+   - Di chuyển đến thư mục muốn lưu dự án
+   - Chạy lệnh: `git clone https://github.com/itgisgroup/robotRPA.git`
+
+### 3. Thiết Lập Môi Trường
+1. Tạo môi trường ảo
+   - Mở Command Prompt với quyền Administrator
+   - Di chuyển đến thư mục dự án: `cd C:\robotRPA` (hoặc thư mục đã giải nén)
+   - Tạo môi trường ảo: `python -m venv venv`
+   - Kích hoạt môi trường: `venv\Scripts\activate`
+
+2. Cài đặt thư viện
+   - Đảm bảo đang ở trong môi trường ảo (có "(venv)" ở đầu dòng lệnh)
+   - Chạy: `pip install -r requirements.txt`
+   - Cài đặt Playwright: `playwright install`
+
+### 4. Cấu Hình Thư Mục và File
+1. Tạo cấu trúc thư mục
+   - Tạo thư mục "TMF-nguon"
+   - Tạo thư mục "TMF-upload"
+   - Tạo thư mục "TMF-completed"
+
+2. Chuẩn bị file Excel
+   - Sao chép mẫu file Excel từ folder template (nếu có)
+   - Hoặc tạo file Excel mới với các cột yêu cầu
+   - Lưu file Excel vào thư mục gốc của dự án
+
+### 5. Chạy Chương Trình
+1. Kích hoạt môi trường (nếu chưa kích hoạt)
+   - Mở Command Prompt
+   - Di chuyển đến thư mục dự án
+   - Chạy: `venv\Scripts\activate`
+
+2. Chạy script
+   - Chạy lệnh: `python main_local.py`
+   - Theo dõi quá trình xử lý trong cửa sổ Command Prompt
+   - Kiểm tra file log và Excel để xem kết quả
+
+### 6. Xử Lý Sự Cố Thường Gặp
+1. Lỗi "Python không được tìm thấy"
+   - Kiểm tra lại việc thêm Python vào PATH
+   - Thử cài đặt lại Python
+   - Sử dụng đường dẫn đầy đủ đến Python
+
+2. Lỗi khi cài đặt thư viện
+   - Đảm bảo kết nối internet ổn định
+   - Chạy với quyền Administrator
+   - Cập nhật pip: `python -m pip install --upgrade pip`
+
+3. Lỗi Playwright
+   - Chạy lại lệnh: `playwright install`
+   - Kiểm tra tường lửa và phần mềm diệt virus
+   - Thử cài đặt trình duyệt thủ công
+
+### 7. Bảo Trì và Cập Nhật
+1. Cập nhật mã nguồn
+   - Tải ZIP mới nhất từ GitHub
+   - Hoặc chạy `git pull` nếu dùng Git
+
+2. Cập nhật thư viện
+   - Kích hoạt môi trường ảo
+   - Chạy: `pip install -r requirements.txt --upgrade`
+
+### 8. Liên Hệ Hỗ Trợ
+Nếu gặp khó khăn trong quá trình cài đặt và sử dụng, vui lòng:
+- Tạo issue trên GitHub
+- Hoặc liên hệ trực tiếp qua email: [địa chỉ email hỗ trợ]
 
 ## Xử Lý Lỗi và Log
 
