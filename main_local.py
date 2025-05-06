@@ -7,10 +7,10 @@ from logger import BotLogger
 import shutil
 
 # Configuration
-EXCEL_PATH = "/Users/hlethanh486/Desktop/robotTH/Update_DescriptionDrawer.xlsx"
-TMF_SOURCE_DIR = "/Users/hlethanh486/Desktop/robotTH/TMF-nguon"
-TMF_UPLOAD_DIR = "/Users/hlethanh486/Desktop/robotTH/TMF-upload"
-TMF_COMPLETED_DIR = "/Users/hlethanh486/Desktop/robotTH/TMF-completed"
+EXCEL_PATH = "/Users/Administrator/Desktop/robot/Update_DescriptionDrawer.xlsx"
+TMF_SOURCE_DIR = "/Users/Administrator/Desktop/robot/TMF-nguon"
+TMF_UPLOAD_DIR = "/Users/Administrator/Desktop/robot/TMF-upload"
+TMF_COMPLETED_DIR = "/Users/Administrator/Desktop/robot/TMF-completed"
 USERNAME = "uyennguyen@inthuanhung.com.vn"
 PASSWORD = "@thla123456"
 CADDI_URL = "https://caddi-drawer.com/en/22c37f66-ee3f-4af4-ab92-16c305be7460"
