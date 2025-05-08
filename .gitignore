@@ -36,9 +36,6 @@ ENV/
 *.log
 
 # Local files
-TMF-nguon/
-TMF-upload/
-TMF-completed/
 Listfile/
 
 # Mac
