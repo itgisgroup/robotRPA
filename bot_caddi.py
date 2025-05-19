@@ -1,6 +1,7 @@
 from playwright.sync_api import sync_playwright, TimeoutError
 import time
 import os
+import math
 
 CADDI_URL = "https://caddi-drawer.com/en/22c37f66-ee3f-4af4-ab92-16c305be7460"
 
@@ -18,8 +19,12 @@ def wait_for_modal_close(page):
     except:
         return False
 
-def upload_to_caddi(username, password, project_name, file_path, description, file_category, page=None):
+def upload_to_caddi(username, password, project_name, file_path, description, file_category, page=None, is_first_upload=False):
     global current_project, current_category
+    
+    # Chuẩn hóa file_category
+    if file_category is None or (isinstance(file_category, float) and math.isnan(file_category)) or str(file_category).strip().lower() in ["", "nan", "none"]:
+        file_category = None
     
     print(f"\nTên dự án từ Google Sheet: {project_name}")
     print(f"File category: {file_category}")
@@ -33,9 +38,6 @@ def upload_to_caddi(username, password, project_name, file_path, description, fi
     print(f"Kích thước file: {os.path.getsize(file_path)} bytes")
     
     try:
-        # Kiểm tra xem có phải lần đầu upload không (current_project và current_category là None)
-        is_first_upload = current_project is None or current_category is None
-        
         # Kiểm tra xem có cần chọn lại Project và Category không
         need_select_project = current_project != project_name
         need_select_category = current_category != file_category
@@ -87,40 +89,95 @@ def upload_to_caddi(username, password, project_name, file_path, description, fi
                 print("Không tìm thấy ô Project")
                 return None
 
-        # Chọn lại Category nếu cần
-        if is_first_upload or need_select_category:
-            print(f"Cần chọn File Category (hiện tại: {current_category}, mới: {file_category})")
-            # Tìm ô File Category
-            print("Đang tìm ô File Category...")
-            category_input = page.locator('label:has-text("File category") + div input').first
-            if category_input:
-                print("Đã tìm thấy ô File Category")
-                category_input.click()
-                time.sleep(2)
-                
-                # Nhập File Category
-                print(f"Đang nhập File Category: {file_category}")
-                category_input.fill(file_category)
-                print("Đã nhập File Category")
-                time.sleep(3)
-                
-                # Chọn category trong dropdown
-                print("Đang tìm category trong dropdown...")
-                category_option = page.locator(f'div[role="presentation"] li[role="option"]:text-is("{file_category}")').first
-                if category_option:
-                    print("Đã tìm thấy category, đang click...")
-                    category_option.click()
-                    print("Đã click chọn category")
+        # Xử lý chọn File Category
+        if is_first_upload:
+            if file_category:
+                print("Lần đầu upload và có File Category, tiến hành chọn category.")
+                # Tìm ô File Category
+                category_input = page.locator('label:has-text("File category") + div input').first
+                if category_input:
+                    print("Đã tìm thấy ô File Category")
+                    category_input.click()
                     time.sleep(2)
-                    current_category = file_category
+                    print(f"Đang nhập File Category: {file_category}")
+                    category_input.fill(file_category)
+                    print("Đã nhập File Category")
+                    time.sleep(3)
+                    print("Đang tìm category trong dropdown...")
+                    category_option = page.locator(f'div[role="presentation"] li[role="option"]:text-is("{file_category}")').first
+                    if category_option:
+                        print("Đã tìm thấy category, đang click...")
+                        category_option.click()
+                        print("Đã click chọn category")
+                        time.sleep(2)
+                        current_category = file_category
+                    else:
+                        print("Không tìm thấy category trong dropdown")
+                        return None
                 else:
-                    print("Không tìm thấy category trong dropdown")
+                    print("Không tìm thấy ô File Category")
                     return None
             else:
-                print("Không tìm thấy ô File Category")
-                return None
+                print("Lần đầu upload và không có File Category, bỏ qua bước chọn category.")
+                current_category = None
         else:
-            print(f"Giữ nguyên Project ({current_project}) và Category ({current_category})")
+            if file_category:
+                if current_category and file_category != current_category:
+                    # Đã có category trước đó và khác category mới, cần clear trước khi chọn lại
+                    category_input = page.locator('label:has-text("File category") + div input').first
+                    if category_input:
+                        clear_btn = page.locator('label:has-text("File category") + div button[aria-label="Clear"]').first
+                        if clear_btn and clear_btn.is_visible():
+                            print("Đang clear trường File Category cũ...")
+                            clear_btn.click()
+                            time.sleep(1)
+                        else:
+                            print("Không tìm thấy hoặc không hiển thị nút clear File Category.")
+                if not current_category or (current_category and file_category != current_category):
+                    # Sau khi clear (nếu cần), chọn category mới
+                    print(f"Cần chọn File Category (hiện tại: {current_category}, mới: {file_category})")
+                    category_input = page.locator('label:has-text("File category") + div input').first
+                    if category_input:
+                        print("Đã tìm thấy ô File Category")
+                        category_input.click()
+                        time.sleep(2)
+                        print(f"Đang nhập File Category: {file_category}")
+                        category_input.fill(file_category)
+                        print("Đã nhập File Category")
+                        time.sleep(3)
+                        print("Đang tìm category trong dropdown...")
+                        category_option = page.locator(f'div[role="presentation"] li[role="option"]:text-is("{file_category}")').first
+                        if category_option:
+                            print("Đã tìm thấy category, đang click...")
+                            category_option.click()
+                            print("Đã click chọn category")
+                            time.sleep(2)
+                            current_category = file_category
+                        else:
+                            print("Không tìm thấy category trong dropdown")
+                            return None
+                    else:
+                        print("Không tìm thấy ô File Category")
+                        return None
+                else:
+                    print("Giữ nguyên category, không cần thao tác lại.")
+            else:
+                print("Không có File Category, bỏ qua bước chọn category.")
+                if current_category:
+                    category_input = page.locator('label:has-text("File category") + div input').first
+                    if category_input:
+                        clear_btn = page.locator('label:has-text("File category") + div button[aria-label="Clear"]').first
+                        if clear_btn and clear_btn.is_visible():
+                            print("Đang clear trường File Category cũ...")
+                            clear_btn.click()
+                            time.sleep(1)
+                            current_category = None
+                        else:
+                            print("Không tìm thấy hoặc không hiển thị nút clear File Category.")
+                    else:
+                        print("Không tìm thấy ô File Category.")
+                else:
+                    print("Trường File Category đã rỗng, không cần clear.")
 
         # Bắt đầu quy trình upload file
         print("=== Bắt đầu quy trình upload file ===")

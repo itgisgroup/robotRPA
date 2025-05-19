@@ -5,15 +5,19 @@ from bot_caddi import upload_to_caddi, find_file_and_get_drawing_id, update_desc
 from excel_handler import ExcelHandler
 from logger import BotLogger
 import shutil
+import glob
+from datetime import datetime
 
 # Configuration
-EXCEL_PATH = "/Users/Administrator/Desktop/robot/Update_DescriptionDrawer.xlsx"
-TMF_SOURCE_DIR = "/Users/Administrator/Desktop/robot/TMF-nguon"
-TMF_UPLOAD_DIR = "/Users/Administrator/Desktop/robot/TMF-upload"
-TMF_COMPLETED_DIR = "/Users/Administrator/Desktop/robot/TMF-completed"
+EXCEL_PATH = "/Users/hlethanh486/Desktop/robotTH/Update_DescriptionDrawer.xlsx"
+TMF_SOURCE_DIR = "/Users/hlethanh486/Desktop/robotTH/TMF-nguon"
+TMF_UPLOAD_DIR = "/Users/hlethanh486/Desktop/robotTH/TMF-upload"
+TMF_COMPLETED_DIR = "/Users/hlethanh486/Desktop/robotTH/TMF-completed"
 USERNAME = "uyennguyen@inthuanhung.com.vn"
 PASSWORD = "@thla123456"
 CADDI_URL = "https://caddi-drawer.com/en/22c37f66-ee3f-4af4-ab92-16c305be7460"
+FILE_CHO_XU_LY_DIR = "/Users/hlethanh486/Desktop/robotTH/File-ChoXuLy"
+FILE_HOAN_THANH_DIR = "/Users/hlethanh486/Desktop/robotTH/File-Hoanthanh"
 
 def ensure_directories():
     """Đảm bảo các thư mục cần thiết tồn tại"""
@@ -41,6 +45,7 @@ def upload_all_files(excel_handler, logger, page):
     pending_files = excel_handler.read_pending_files()
     print(f"\n=== Bắt đầu upload {len(pending_files)} file ===")
     
+    is_first_upload = True
     for file in pending_files:
         file_name = None  # Initialize file_name outside try block
         try:
@@ -63,8 +68,10 @@ def upload_all_files(excel_handler, logger, page):
                 file_path,
                 description,
                 file_category,
-                page
+                page,
+                is_first_upload=is_first_upload
             )
+            is_first_upload = False
             
             if result:
                 # Upload thành công
@@ -139,80 +146,86 @@ def process_uploaded_files(excel_handler, logger, page):
             excel_handler.update_status(file_name, "Lỗi")
             logger.log_error(f"Lỗi xử lý file đã upload {file_name}: {str(e)}")
 
-def main():
-    """Hàm chính thực hiện toàn bộ quy trình"""
-    # Bắt đầu đếm thời gian
-    start_time = time.time()
-    
-    # Khởi tạo các thành phần
-    excel_handler = ExcelHandler(EXCEL_PATH)
-    logger = BotLogger(EXCEL_PATH, "bot.log")
-    
+def process_excel_file(excel_path, logger):
+    """Xử lý 1 file excel theo quy trình cũ"""
+    excel_handler = ExcelHandler(excel_path)
     try:
-        # Đảm bảo các thư mục tồn tại
         ensure_directories()
-        
-        # Kiểm tra các file cần xử lý trước
         pending_files = excel_handler.read_pending_files()
         if not pending_files:
-            print("\nKhông có file nào cần xử lý. Vui lòng kiểm tra lại trạng thái trong file Excel.")
-            return
-            
-        print(f"\nĐã tìm thấy {len(pending_files)} file cần xử lý.")
+            print(f"\nKhông có file nào cần xử lý trong {os.path.basename(excel_path)}. Vui lòng kiểm tra lại trạng thái trong file Excel.")
+            return False  # Trả về False nếu không có file cần xử lý
         
+        print(f"\nĐã tìm thấy {len(pending_files)} file cần xử lý trong {os.path.basename(excel_path)}.")
         with sync_playwright() as p:
-            # Khởi tạo browser
             browser = p.chromium.launch(headless=False)
             page = browser.new_page()
             page.set_viewport_size({"width": 1920, "height": 1080})
-            
-            # Truy cập trang và đăng nhập
             print("\n=== ĐĂNG NHẬP ===")
             page.goto(CADDI_URL)
-            time.sleep(10)  # Khôi phục lại 10s cho trang load
-            
-            # Đăng nhập
+            time.sleep(10)
             print("Đang đăng nhập...")
             username_input = page.locator('input[type="text"]').first
             if username_input:
                 username_input.fill(USERNAME)
-                time.sleep(2)  # Khôi phục lại 2s
-            
+                time.sleep(2)
             password_input = page.locator('input[type="password"]').first
             if password_input:
                 password_input.fill(PASSWORD)
-                time.sleep(2)  # Khôi phục lại 2s
-            
+                time.sleep(2)
             submit_button = page.locator('button[type="submit"]').first
             if submit_button:
                 submit_button.click()
-                time.sleep(15)  # Khôi phục lại 15s cho đăng nhập
-            
-            # BƯỚC 1: Upload tất cả file
+                time.sleep(15)
             print("\n=== BƯỚC 1: UPLOAD TẤT CẢ FILE ===")
             upload_all_files(excel_handler, logger, page)
-            
-            # BƯỚC 2: Xử lý các file đã upload thành công
             print("\n=== BƯỚC 2: XỬ LÝ CÁC FILE ĐÃ UPLOAD ===")
             process_uploaded_files(excel_handler, logger, page)
-            
-            # Đóng browser
             browser.close()
-            
+            return True  # Trả về True nếu xử lý thành công
     except Exception as e:
         logger.log_error(f"Lỗi chương trình: {str(e)}")
         print(f"Lỗi chương trình: {str(e)}")
+        return False  # Trả về False nếu có lỗi
+
+def main():
+    start_time = time.time()
+    # Lấy danh sách tất cả file .xlsx trong thư mục File-ChoXuLy
+    excel_files = glob.glob(os.path.join(FILE_CHO_XU_LY_DIR, '*.xlsx'))
+    if not excel_files:
+        print(f"\nKhông có file Excel nào trong {FILE_CHO_XU_LY_DIR} để xử lý.")
+        return
     
-    finally:
-        # Tính và hiển thị tổng thời gian thực hiện
-        end_time = time.time()
-        total_time = end_time - start_time
-        hours = int(total_time // 3600)
-        minutes = int((total_time % 3600) // 60)
-        seconds = int(total_time % 60)
+    for excel_path in excel_files:
+        logger = BotLogger(excel_path, "bot.log")
+        print(f"\n==============================\nBẮT ĐẦU XỬ LÝ FILE: {os.path.basename(excel_path)}\n==============================")
         
-        time_msg = f"\nTổng thời gian thực hiện: {hours} giờ {minutes} phút {seconds} giây"
-        print(time_msg)
+        # Xử lý file và lưu kết quả
+        success = process_excel_file(excel_path, logger)
+        
+        # Chỉ di chuyển file nếu xử lý thành công
+        if success:
+            now = datetime.now().strftime('%d%m%Y_%H%M%S')
+            file_name = os.path.basename(excel_path)
+            new_file_name = f"hoanthanh_{now}_{file_name}"
+            dest_path = os.path.join(FILE_HOAN_THANH_DIR, new_file_name)
+            try:
+                shutil.move(excel_path, dest_path)
+                print(f"Đã di chuyển file hoàn thành sang: {dest_path}")
+            except Exception as e:
+                print(f"Lỗi khi di chuyển file: {str(e)}")
+        else:
+            print(f"Không di chuyển file {excel_path} do xử lý chưa hoàn thành")
+    
+    # Tổng kết thời gian
+    end_time = time.time()
+    total_time = end_time - start_time
+    hours = int(total_time // 3600)
+    minutes = int((total_time % 3600) // 60)
+    seconds = int(total_time % 60)
+    time_msg = f"\nTổng thời gian thực hiện: {hours} giờ {minutes} phút {seconds} giây"
+    print(time_msg)
+    if excel_files:
         logger.log(time_msg)
 
 if __name__ == "__main__":
