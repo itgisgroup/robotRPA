@@ -155,7 +155,7 @@ def process_excel_file(excel_path, logger):
         if not pending_files:
             print(f"\nKhông có file nào cần xử lý trong {os.path.basename(excel_path)}. Vui lòng kiểm tra lại trạng thái trong file Excel.")
             return False  # Trả về False nếu không có file cần xử lý
-        
+            
         print(f"\nĐã tìm thấy {len(pending_files)} file cần xử lý trong {os.path.basename(excel_path)}.")
         with sync_playwright() as p:
             browser = p.chromium.launch(headless=False)
@@ -218,13 +218,13 @@ def main():
             print(f"Không di chuyển file {excel_path} do xử lý chưa hoàn thành")
     
     # Tổng kết thời gian
-    end_time = time.time()
-    total_time = end_time - start_time
-    hours = int(total_time // 3600)
-    minutes = int((total_time % 3600) // 60)
-    seconds = int(total_time % 60)
-    time_msg = f"\nTổng thời gian thực hiện: {hours} giờ {minutes} phút {seconds} giây"
-    print(time_msg)
+        end_time = time.time()
+        total_time = end_time - start_time
+        hours = int(total_time // 3600)
+        minutes = int((total_time % 3600) // 60)
+        seconds = int(total_time % 60)
+        time_msg = f"\nTổng thời gian thực hiện: {hours} giờ {minutes} phút {seconds} giây"
+        print(time_msg)
     if excel_files:
         logger.log(time_msg)
 

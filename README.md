@@ -260,3 +260,67 @@ Mọi đóng góp vui lòng tạo Pull Request hoặc báo lỗi qua Issues.
 
 ## License
 MIT License 
+
+# RobotTH - Hướng dẫn sử dụng 2 luồng xử lý file CADDi
+
+## 1. Cấu trúc thư mục
+
+```
+robotTH/
+├── upload_file_drawer.py
+├── update_description_drawer.py
+├── bot_caddi.py
+├── excel_handler.py
+├── logger.py
+├── File-ChoXuLy/
+├── File-Hoanthanh/
+├── TMF-nguon/
+├── TMF-upload/
+├── TMF-completed/
+```
+
+## 2. Chuẩn bị file Excel
+
+### Luồng 1: Upload file
+- Đặt file Excel có tên dạng: `Upload_FileDrawer_*.xlsx` vào thư mục `File-ChoXuLy/`
+- Các cột cần thiết: `Tên file (File name)`, `Tên dự án (Project)`, `File category`, `Mô tả (Description)`, `Trạng thái upload`
+
+### Luồng 2: Cập nhật thông tin
+- Đặt file Excel có tên dạng: `Update_DescriptionDrawer_*.xlsx` vào thư mục `File-ChoXuLy/`
+- Các cột cần thiết: `Tên file (File name)`, `Mô tả (Description)`, `ID file (CADDi)`, `Ds DrawingID`, `Trạng thái cập nhật`
+
+## 3. Cài đặt môi trường
+
+```bash
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+python -m playwright install
+```
+
+> **Lưu ý:** Nếu chưa có file `requirements.txt`, hãy cài các package: `playwright`, `pandas`, `openpyxl`, ...
+
+## 4. Chạy từng luồng
+
+### Luồng 1: Upload file
+```bash
+python upload_file_drawer.py
+```
+- Bot sẽ upload từng file theo danh sách trong file Excel, cập nhật trạng thái, di chuyển file vật lý nếu thành công.
+
+### Luồng 2: Cập nhật thông tin & DrawingID
+```bash
+python update_description_drawer.py
+```
+- Bot sẽ cập nhật Description, lấy DrawingID, ghi vào Excel và cập nhật trường Ds DrawingID trên phần mềm, cập nhật trạng thái, di chuyển file Excel sang thư mục hoàn thành.
+
+## 5. Lưu ý
+- Không đổi tên các cột trong file Excel.
+- Đảm bảo các file cần xử lý đã được đặt đúng thư mục và đúng định dạng tên file.
+- Có thể chạy 2 luồng độc lập, không cần liên tục.
+- Nếu gặp lỗi về selector trường Ds DrawingID, cần điều chỉnh lại selector trong hàm `update_ds_drawingid_on_software`.
+
+## 6. Kiểm tra kết quả
+- File upload thành công sẽ được di chuyển sang `TMF-upload/`.
+- File Excel sau khi cập nhật xong sẽ được di chuyển sang `File-Hoanthanh/` với tiền tố `hoanthanh_...`.
+- Log chi tiết được ghi vào các file log tương ứng. 

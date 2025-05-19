@@ -4,11 +4,11 @@ import shutil
 from datetime import datetime
 
 class ExcelHandler:
-    def __init__(self, excel_path):
+    def __init__(self, excel_path, main_sheet="Danh sách file cần upload", completed_sheet="Upload Hoàn thành"):
         """Khởi tạo Excel handler"""
         self.excel_path = excel_path
-        self.main_sheet = "Danh sách file cần upload"
-        self.completed_sheet = "Upload Hoàn thành"
+        self.main_sheet = main_sheet
+        self.completed_sheet = completed_sheet
         self.log_sheet = "Log"
         if not os.path.exists(excel_path):
             raise FileNotFoundError(f"Không tìm thấy file Excel tại: {excel_path}")
@@ -189,4 +189,9 @@ class ExcelHandler:
             else:
                 print(f"Không tìm thấy file {file_name} trong thư mục {source_dir}")
         except Exception as e:
-            print(f"Lỗi khi di chuyển file: {str(e)}") 
+            print(f"Lỗi khi di chuyển file: {str(e)}")
+
+    def read_files_to_update(self):
+        """Đọc tất cả các dòng có trạng thái Chờ xử lý (hoặc trạng thái cần update)"""
+        df = pd.read_excel(self.excel_path, sheet_name=self.main_sheet)
+        return df[df["Trạng thái"].astype(str).str.strip() == "Chờ xử lý"].to_dict('records') 
